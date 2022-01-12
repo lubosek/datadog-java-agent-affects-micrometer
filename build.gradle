@@ -1,0 +1,102 @@
+plugins {
+    id 'java'
+    id "io.freefair.lombok" version "6.3.0"
+}
+
+group = 'com.cisco.cognitive.delivery'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenLocal()
+    maven {
+        url "https://prg5-nexus.cisco.com/nexus/content/groups/public"
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation('io.micrometer:micrometer-registry-statsd:1.8.0')
+    //currently we use 1.6.3 in prod
+//    implementation('io.micrometer:micrometer-registry-statsd:1.6.3')
+    implementation 'com.datadoghq:java-dogstatsd-client:3.0.1'
+    implementation 'ch.qos.logback:logback-classic:1.2.10'
+}
+
+configurations.implementation.setCanBeResolved(true)
+task jar(type: Jar, overwrite: true) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.implementation.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+task runWithJavaAgent82(type: JavaExec) {
+    dependsOn(tasks.build)
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.cisco.cognitive.delivery.DataDogMetricPush'
+    jvmArgs = ['-javaagent:/opt/datadog/dd-java-agent-0.82.0.jar']
+    environment "APP_VERSION", "82"
+}
+
+task runWithJavaAgent90(type: JavaExec) {
+    dependsOn(tasks.build)
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.cisco.cognitive.delivery.DataDogMetricPush'
+    jvmArgs = ['-javaagent:/opt/datadog/dd-java-agent-0.90.0.jar']
+    environment "APP_VERSION", "90"
+}
+
+task runWithJavaAgent91(type: JavaExec) {
+    dependsOn(tasks.build)
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.cisco.cognitive.delivery.DataDogMetricPush'
+    jvmArgs = ['-javaagent:/opt/datadog/dd-java-agent-0.91.0.jar']
+    environment "APP_VERSION", "91"
+}
+
+task runWithJavaAgent92(type: JavaExec) {
+    dependsOn(tasks.build)
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.cisco.cognitive.delivery.DataDogMetricPush'
+    jvmArgs = ['-javaagent:/opt/datadog/dd-java-agent-0.92.0.jar']
+    environment "APP_VERSION", "92"
+}
+
+task runWithJavaAgent92Jdk17(type: JavaExec) {
+    dependsOn(tasks.build)
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.cisco.cognitive.delivery.DataDogMetricPush'
+    jvmArgs = ['-javaagent:/opt/datadog/dd-java-agent-0.92.0.jar']
+    environment "APP_VERSION", "92jdk17"
+}
+
+task runNoJavaAgent(type: JavaExec) {
+    dependsOn(tasks.build)
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.cisco.cognitive.delivery.DataDogMetricPush'
+    environment "APP_VERSION", "none"
+}
+
+task runWithJavaAgent90AndDatadogClient(type: JavaExec) {
+    dependsOn(tasks.build)
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.cisco.cognitive.delivery.DataDogMetricPush'
+    jvmArgs = ['-javaagent:/opt/datadog/dd-java-agent-0.90.0.jar']
+    environment = [ APP_VERSION: "90ddclient",
+        STATSD_CLIENT: "datadog" ]
+}
+
+task runNoJavaAgentAndDatadogClient(type: JavaExec) {
+    dependsOn(tasks.build)
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.cisco.cognitive.delivery.DataDogMetricPush'
+    environment = [ APP_VERSION: "ddclient",
+                    STATSD_CLIENT: "datadog" ]
+}
+
+test {
+    useJUnitPlatform()
+}
